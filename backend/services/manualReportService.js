@@ -131,9 +131,13 @@ async function createManualReport(data) {
     ];
 
     try {
+      const imgSizeKB = imagePath ? Math.round(imagePath.length * 0.75 / 1024) : 0;
+      console.log(`[ManualReportService] Inserting ${reportCode} into DB (image: ${imgSizeKB}KB)...`);
+      const t0 = Date.now();
       const [result] = await pool.query(insertQuery, values);
+      const ms = Date.now() - t0;
       reportObject.id = result.insertId;
-      console.log(`[ManualReportService] Report ${reportCode} successfully saved to MySQL (ID: ${result.insertId})`);
+      console.log(`[ManualReportService] ✓ Report ${reportCode} saved to MySQL in ${ms}ms (ID: ${result.insertId})`);
     } catch (error) {
       console.error(`[ManualReportService] MySQL insert failed for ${reportCode}:`, error.message);
     }

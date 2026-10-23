@@ -61,6 +61,56 @@ app.get("/api/health", (req, res) => {
 app.use("/api/detection", detectionRoutes);
 app.use("/api/reports", reportRoutes);
 
+// -----------------------------------------------------------------------
+// GET /api/test-email — Diagnostic endpoint to verify email delivery
+// Usage: https://injuredanimaldetection.onrender.com/api/test-email
+// -----------------------------------------------------------------------
+app.get("/api/test-email", async (req, res) => {
+  try {
+    const { sendReportEmail } = require("./services/emailService");
+    const testReport = {
+      report_code: "TEST-" + Date.now(),
+      report_source: "MANUAL",
+      animal_type: "Dog",
+      breed: "Unknown",
+      injury_type: "Test",
+      severity: "Minor",
+      confidence: 1.0,
+      description: "This is a test email from the Injured Animal Detection Platform.",
+      recommended_action: "No action needed – this is a diagnostic test.",
+      location: "Test Location",
+      report_date: new Date().toISOString().split("T")[0],
+      report_time: new Date().toTimeString().slice(0, 8),
+      reporter_name: "System Test",
+      reporter_email: process.env.SMTP_USER || "dahiphalekrishna244@gmail.com",
+      reporter_contact: null,
+      image_path: null,
+      report_status: "Test"
+    };
+
+    const providers = {
+      resend: Boolean(process.env.RESEND_API_KEY),
+      brevo: Boolean(process.env.BREVO_API_KEY),
+      smtp: Boolean(process.env.SMTP_USER && process.env.SMTP_PASS)
+    };
+
+    console.log(`[TestEmail] Starting test email with providers:`, providers);
+    const results = await sendReportEmail(testReport);
+    console.log(`[TestEmail] Results:`, JSON.stringify(results));
+
+    const success = results.some(r => r.status === "SUCCESS");
+    res.json({
+      success,
+      message: success ? "Test email sent successfully!" : "Test email failed. Check server logs for details.",
+      providers_available: providers,
+      results
+    });
+  } catch (err) {
+    console.error("[TestEmail] Error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Error Handling Middleware
 app.use(notFoundHandler);
 app.use(errorHandler);

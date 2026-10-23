@@ -1,5 +1,17 @@
 "use strict";
 
+/**
+ * emailService.js — HTTPS-First Email Delivery
+ * =============================================
+ * Priority order (all over HTTPS port 443 — never blocked by Render):
+ *   1. Resend API  (set RESEND_API_KEY in Render env vars)
+ *   2. Brevo API   (set BREVO_API_KEY in Render env vars)
+ *   3. SMTP Nodemailer fallback (for local dev only — blocked on Render)
+ *
+ * On Render Free tier, SMTP ports 25/465/587 are blocked by firewall.
+ * Resend and Brevo communicate purely over HTTPS (port 443) — always works.
+ */
+
 const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs");
@@ -11,51 +23,46 @@ try { dns.setDefaultResultOrder("ipv4first"); } catch (_) {}
 let _transporter = null;
 
 // ---------------------------------------------------------------------------
-// SMTP Transporter
+// Resolve image to base64 string (needed for Resend/Brevo inline attachment)
 // ---------------------------------------------------------------------------
-function getTransporter() {
-  const host = "smtp.gmail.com";
-  // Always use port 587 with STARTTLS on Render to prevent ENETUNREACH
-  const port = 587;
-  const user = process.env.SMTP_USER || "dahiphalekrishna244@gmail.com";
-  const pass = process.env.SMTP_PASS || "gshfsquyiecrwkuv";
+function resolveImageBase64(imagePath) {
+  if (!imagePath) return null;
 
-  if (!user || !pass) {
-    console.warn("[EmailService] SMTP credentials missing (SMTP_USER or SMTP_PASS not set).");
+  // Already a data URI — extract base64
+  if (imagePath.startsWith("data:")) {
+    const matches = imagePath.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (matches && matches.length === 3) {
+      return { mimeType: matches[1], base64: matches[2] };
+    }
     return null;
   }
 
-  if (!_transporter) {
-    const transportOptions = {
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false, // Port 587 uses STARTTLS
-      requireTLS: true,
-      family: 4, // Force IPv4 to prevent ENETUNREACH on cloud containers
-      lookup: (hostname, options, callback) => {
-        dns.lookup(hostname, { family: 4 }, (err, address, family) => {
-          callback(err, address, family);
-        });
-      },
-      auth: { user, pass },
-      tls: {
-        rejectUnauthorized: false
-      }
-    };
+  // File path — read and convert
+  const clean = imagePath.replace(/^[/\\]+/, "");
+  const candidates = [
+    path.isAbsolute(imagePath) ? imagePath : null,
+    path.join(__dirname, "..", clean),
+    path.join(__dirname, "..", "..", clean)
+  ].filter(Boolean);
 
-    _transporter = nodemailer.createTransport(transportOptions);
-    console.log(`[EmailService] SMTP transporter initialized -> smtp.gmail.com:587 (Forced IPv4, ${user})`);
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      try {
+        const buf = fs.readFileSync(p);
+        const ext = path.extname(p).toLowerCase().replace(".", "") || "jpeg";
+        const mimeMap = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif", webp: "image/webp" };
+        return { mimeType: mimeMap[ext] || "image/jpeg", base64: buf.toString("base64") };
+      } catch (_) {}
+    }
   }
-
-  return _transporter;
+  return null;
 }
 
 // ---------------------------------------------------------------------------
-// Fetch rescue contact emails dynamically from MySQL rescue_contacts table
-// (NO HARDCODED CONTACTS, with resilient fallback to primary rescue coordinator)
+// Fetch rescue contact emails from MySQL rescue_contacts table
 // ---------------------------------------------------------------------------
 async function fetchRecipientEmails() {
-  const fallbackEmail = "dahiphalekrishna244@gmail.com";
+  const fallbackEmail = process.env.SMTP_USER || "dahiphalekrishna244@gmail.com";
   try {
     const [rows] = await pool.query(
       "SELECT email FROM rescue_contacts WHERE active = 1 AND email IS NOT NULL AND email != '' ORDER BY id ASC;"
@@ -65,27 +72,23 @@ async function fetchRecipientEmails() {
       return Array.from(new Set([...emails, fallbackEmail]));
     }
   } catch (err) {
-    console.error("[EmailService] Failed to query rescue_contacts table for emails:", err.message);
+    console.error("[EmailService] Failed to query rescue_contacts:", err.message);
   }
   return [fallbackEmail];
 }
 
 // ---------------------------------------------------------------------------
-// Helper: Format camera display label (e.g. CAM-001 -> Camera 1, CAM-002 -> Camera 2)
+// Helper: Camera display label
 // ---------------------------------------------------------------------------
 function getCameraLabel(cameraId) {
   if (!cameraId) return "Camera 1";
   const numMatch = String(cameraId).match(/\d+/);
-  if (numMatch) {
-    const num = parseInt(numMatch[0], 10);
-    return `Camera ${num}`;
-  }
+  if (numMatch) return `Camera ${parseInt(numMatch[0], 10)}`;
   return String(cameraId);
 }
 
 // ---------------------------------------------------------------------------
-// Build HTML Email Body containing all required fields:
-// Report ID, Animal type, Breed, Injury type, Severity, Description, Location, Date, Time, Animal image
+// Build HTML email body
 // ---------------------------------------------------------------------------
 function buildHtmlBody(report) {
   const reportCode = report.report_code || "IA-UNKNOWN";
@@ -235,124 +238,293 @@ async function logDelivery(reportCode, type, recipient, status, errorMsg) {
       [reportCode, type, recipient, validStatus, errorMsg || null]
     );
   } catch (err) {
-    console.warn(`[EmailService] Failed to log delivery into report_delivery_logs:`, err.message);
+    console.warn(`[EmailService] Failed to log delivery:`, err.message);
   }
 }
 
 // ---------------------------------------------------------------------------
-// Resolve animal image absolute path on disk
+// METHOD 1: Resend API (HTTPS port 443 — works on Render Free tier)
+// Sign up free at https://resend.com | 3000 free emails/month
+// Add RESEND_API_KEY to Render Dashboard > Environment
 // ---------------------------------------------------------------------------
-function resolveImagePath(imagePath) {
-  if (!imagePath) return null;
-  if (path.isAbsolute(imagePath) && fs.existsSync(imagePath)) {
-    return imagePath;
-  }
-  const clean = imagePath.replace(/^[/\\]+/, "");
-  // Try backend root
-  const p1 = path.join(__dirname, "..", clean);
-  if (fs.existsSync(p1)) return p1;
-  // Try project root
-  const p2 = path.join(__dirname, "..", "..", clean);
-  if (fs.existsSync(p2)) return p2;
-  return null;
-}
+async function sendViaResend(recipients, subject, htmlBody, report) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error("RESEND_API_KEY not set");
 
-// ---------------------------------------------------------------------------
-// sendReportEmail(report)
-// Sends email notification with attached image for both AUTOMATIC and MANUAL reports.
-// ---------------------------------------------------------------------------
-async function sendReportEmail(report) {
-  const reportCode = report.report_code || "IA-UNKNOWN";
-  let recipients = await fetchRecipientEmails();
+  const fromDomain = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+  const senderName = "Injured Animal Alert";
+  const from = `${senderName} <${fromDomain}>`;
 
-  if (report.reporter_email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(report.reporter_email)) {
-    recipients = Array.from(new Set([...recipients, report.reporter_email.trim()]));
-  }
-
-  if (!recipients || recipients.length === 0) {
-    recipients = ["dahiphalekrishna244@gmail.com"];
-  }
-
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.warn(`[EmailService] SMTP credentials missing, skipping email delivery for ${reportCode}.`);
-    for (const recipient of recipients) {
-      await logDelivery(reportCode, "EMAIL", recipient, "FAILED", "SMTP credentials missing in .env");
-    }
-    return recipients.map(recipient => ({ recipient, status: "FAILED", error: "SMTP credentials missing in .env" }));
-  }
-
+  // Build attachments for Resend (base64-encoded)
   const attachments = [];
   if (report.image_path) {
-    if (report.image_path.startsWith("data:")) {
-      const matches = report.image_path.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-      if (matches && matches.length === 3) {
-        attachments.push({
-          filename: "animal_evidence.jpg",
-          content: Buffer.from(matches[2], "base64"),
-          cid: "animal_photo"
-        });
-        console.log(`[EmailService] Attached animal image from Base64 Data URI`);
-      }
-    } else {
-      const resolvedPath = resolveImagePath(report.image_path);
-      if (resolvedPath) {
-        attachments.push({
-          filename: path.basename(resolvedPath),
-          path: resolvedPath,
-          cid: "animal_photo"
-        });
-        console.log(`[EmailService] Attached animal image: ${resolvedPath}`);
-      } else {
-        console.warn(`[EmailService] Animal image file not found on disk: ${report.image_path}`);
-      }
+    const imgData = resolveImageBase64(report.image_path);
+    if (imgData) {
+      attachments.push({
+        filename: "animal_evidence.jpg",
+        content: imgData.base64
+      });
+      console.log(`[EmailService/Resend] Attached animal image (${Math.round(imgData.base64.length * 0.75 / 1024)}KB)`);
     }
-  }
-
-  const htmlBody = buildHtmlBody(report);
-
-  const isAutomatic = (report.report_source || "").toUpperCase() === "AUTOMATIC" || Boolean(report.camera_id);
-  const cameraLabel = getCameraLabel(report.camera_id);
-
-  const subject = isAutomatic
-    ? `URGENT: Injured Animal Detected by ${cameraLabel} - ${reportCode} (${report.animal_type || "Animal"} - ${report.severity || "Moderate"})`
-    : `URGENT: Injured Animal Report ${reportCode} - ${report.animal_type || "Animal"} (${report.severity || "Moderate"})`;
-
-  const senderEmail = process.env.SMTP_USER || "dahiphalekrishna244@gmail.com";
-  let fromAddress;
-  if (isAutomatic) {
-    fromAddress = `"Report from ${cameraLabel}" <${senderEmail}>`;
-  } else {
-    const reporterName = report.reporter_name || "Citizen Reporter";
-    fromAddress = `"${reporterName} (via Animal Rescue Alert)" <${senderEmail}>`;
   }
 
   const results = [];
-
   for (const recipient of recipients) {
     try {
-      const mailOptions = {
-        from: fromAddress,
-        to: recipient,
+      const payload = {
+        from,
+        to: [recipient],
         subject,
         html: htmlBody,
-        attachments
+        attachments: attachments.length > 0 ? attachments : undefined
       };
-      if (report.reporter_email) {
-        mailOptions.replyTo = report.reporter_email;
+
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(15000)
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.id) {
+        console.log(`[EmailService/Resend] SUCCESS: Sent to ${recipient} (ID: ${data.id})`);
+        await logDelivery(report.report_code, "EMAIL_RESEND", recipient, "SUCCESS", null);
+        results.push({ recipient, status: "SUCCESS", provider: "resend", messageId: data.id });
+      } else {
+        const errMsg = data.message || data.error || `HTTP ${response.status}`;
+        console.error(`[EmailService/Resend] FAILED for ${recipient}: ${errMsg}`);
+        await logDelivery(report.report_code, "EMAIL_RESEND", recipient, "FAILED", errMsg);
+        results.push({ recipient, status: "FAILED", provider: "resend", error: errMsg });
       }
-      const info = await transporter.sendMail(mailOptions);
-      console.log(`[EmailService] SUCCESS: Email delivered to ${recipient} (Message ID: ${info.messageId}) from "${fromAddress}"`);
-      await logDelivery(reportCode, "EMAIL", recipient, "SUCCESS", null);
-      results.push({ recipient, status: "SUCCESS", messageId: info.messageId });
     } catch (err) {
-      console.error(`[EmailService] FAILED: Email to ${recipient} failed:`, err.message);
-      await logDelivery(reportCode, "EMAIL", recipient, "FAILED", err.message);
-      results.push({ recipient, status: "FAILED", error: err.message });
+      console.error(`[EmailService/Resend] ERROR for ${recipient}:`, err.message);
+      await logDelivery(report.report_code, "EMAIL_RESEND", recipient, "FAILED", err.message);
+      results.push({ recipient, status: "FAILED", provider: "resend", error: err.message });
+    }
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// METHOD 2: Brevo (formerly Sendinblue) API (HTTPS port 443 — works on Render)
+// Sign up free at https://brevo.com | 300 free emails/day
+// Add BREVO_API_KEY to Render Dashboard > Environment
+// ---------------------------------------------------------------------------
+async function sendViaBrevo(recipients, subject, htmlBody, report) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error("BREVO_API_KEY not set");
+
+  const senderEmail = process.env.SMTP_USER || "dahiphalekrishna244@gmail.com";
+  const senderName = "Injured Animal Alert";
+
+  // Build attachments for Brevo
+  const attachment = [];
+  if (report.image_path) {
+    const imgData = resolveImageBase64(report.image_path);
+    if (imgData) {
+      attachment.push({
+        name: "animal_evidence.jpg",
+        content: imgData.base64
+      });
+      console.log(`[EmailService/Brevo] Attached animal image (${Math.round(imgData.base64.length * 0.75 / 1024)}KB)`);
+    }
+  }
+
+  const to = recipients.map(email => ({ email }));
+
+  const payload = {
+    sender: { name: senderName, email: senderEmail },
+    to,
+    subject,
+    htmlContent: htmlBody,
+    attachment: attachment.length > 0 ? attachment : undefined
+  };
+
+  const results = [];
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": apiKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000)
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.messageId) {
+      console.log(`[EmailService/Brevo] SUCCESS: Sent to ${recipients.join(", ")} (ID: ${data.messageId})`);
+      for (const recipient of recipients) {
+        await logDelivery(report.report_code, "EMAIL_BREVO", recipient, "SUCCESS", null);
+        results.push({ recipient, status: "SUCCESS", provider: "brevo", messageId: data.messageId });
+      }
+    } else {
+      const errMsg = data.message || `HTTP ${response.status}`;
+      console.error(`[EmailService/Brevo] FAILED: ${errMsg}`);
+      for (const recipient of recipients) {
+        await logDelivery(report.report_code, "EMAIL_BREVO", recipient, "FAILED", errMsg);
+        results.push({ recipient, status: "FAILED", provider: "brevo", error: errMsg });
+      }
+    }
+  } catch (err) {
+    console.error(`[EmailService/Brevo] ERROR:`, err.message);
+    for (const recipient of recipients) {
+      await logDelivery(report.report_code, "EMAIL_BREVO", recipient, "FAILED", err.message);
+      results.push({ recipient, status: "FAILED", provider: "brevo", error: err.message });
     }
   }
 
   return results;
+}
+
+// ---------------------------------------------------------------------------
+// METHOD 3: SMTP Nodemailer (local dev only — blocked on Render Free tier!)
+// ---------------------------------------------------------------------------
+function getTransporter() {
+  const user = process.env.SMTP_USER || "dahiphalekrishna244@gmail.com";
+  const pass = process.env.SMTP_PASS || "gshfsquyiecrwkuv";
+
+  if (!user || !pass) {
+    console.warn("[EmailService/SMTP] Credentials missing.");
+    return null;
+  }
+
+  if (!_transporter) {
+    _transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      family: 4,
+      connectionTimeout: 5000,
+      greetingTimeout: 5000,
+      socketTimeout: 8000,
+      lookup: (hostname, options, callback) => {
+        dns.lookup(hostname, { family: 4 }, (err, address, family) => {
+          callback(err, address, family);
+        });
+      },
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false }
+    });
+    console.log(`[EmailService/SMTP] Transporter initialized -> smtp.gmail.com:587`);
+  }
+
+  return _transporter;
+}
+
+async function sendViaSmtp(recipients, subject, htmlBody, report) {
+  const transporter = getTransporter();
+  if (!transporter) {
+    return recipients.map(r => ({ recipient: r, status: "FAILED", error: "SMTP credentials missing" }));
+  }
+
+  const senderEmail = process.env.SMTP_USER || "dahiphalekrishna244@gmail.com";
+  const isAutomatic = (report.report_source || "").toUpperCase() === "AUTOMATIC" || Boolean(report.camera_id);
+  const cameraLabel = getCameraLabel(report.camera_id);
+  const fromAddress = isAutomatic
+    ? `"Report from ${cameraLabel}" <${senderEmail}>`
+    : `"${report.reporter_name || "Citizen Reporter"} (via Animal Rescue Alert)" <${senderEmail}>`;
+
+  const attachments = [];
+  if (report.image_path) {
+    const imgData = resolveImageBase64(report.image_path);
+    if (imgData) {
+      attachments.push({
+        filename: "animal_evidence.jpg",
+        content: Buffer.from(imgData.base64, "base64"),
+        cid: "animal_photo"
+      });
+    }
+  }
+
+  const results = [];
+  for (const recipient of recipients) {
+    try {
+      const info = await transporter.sendMail({
+        from: fromAddress,
+        to: recipient,
+        subject,
+        html: htmlBody,
+        attachments,
+        replyTo: report.reporter_email || undefined
+      });
+      console.log(`[EmailService/SMTP] SUCCESS: to ${recipient} (ID: ${info.messageId})`);
+      await logDelivery(report.report_code, "EMAIL_SMTP", recipient, "SUCCESS", null);
+      results.push({ recipient, status: "SUCCESS", provider: "smtp", messageId: info.messageId });
+    } catch (err) {
+      console.error(`[EmailService/SMTP] FAILED for ${recipient}:`, err.message);
+      await logDelivery(report.report_code, "EMAIL_SMTP", recipient, "FAILED", err.message);
+      results.push({ recipient, status: "FAILED", provider: "smtp", error: err.message });
+    }
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// sendReportEmail(report) — Main entry point
+// Tries Resend → Brevo → SMTP (in order of preference)
+// ---------------------------------------------------------------------------
+async function sendReportEmail(report) {
+  const reportCode = report.report_code || "IA-UNKNOWN";
+
+  // Build recipient list
+  let recipients = await fetchRecipientEmails();
+  if (report.reporter_email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(report.reporter_email)) {
+    recipients = Array.from(new Set([...recipients, report.reporter_email.trim()]));
+  }
+  if (!recipients || recipients.length === 0) {
+    recipients = ["dahiphalekrishna244@gmail.com"];
+  }
+
+  // Build subject
+  const isAutomatic = (report.report_source || "").toUpperCase() === "AUTOMATIC" || Boolean(report.camera_id);
+  const cameraLabel = getCameraLabel(report.camera_id);
+  const subject = isAutomatic
+    ? `URGENT: Injured Animal Detected by ${cameraLabel} - ${reportCode} (${report.animal_type || "Animal"} - ${report.severity || "Moderate"})`
+    : `URGENT: Injured Animal Report ${reportCode} - ${report.animal_type || "Animal"} (${report.severity || "Moderate"})`;
+
+  const htmlBody = buildHtmlBody(report);
+
+  console.log(`[EmailService] Dispatching email for ${reportCode} to: ${recipients.join(", ")}`);
+  console.log(`[EmailService] Available providers: Resend=${Boolean(process.env.RESEND_API_KEY)}, Brevo=${Boolean(process.env.BREVO_API_KEY)}, SMTP=fallback`);
+
+  // --- Try Resend first (best for Render) ---
+  if (process.env.RESEND_API_KEY) {
+    try {
+      console.log(`[EmailService] Attempting Resend HTTPS API...`);
+      const results = await sendViaResend(recipients, subject, htmlBody, report);
+      const allSuccess = results.every(r => r.status === "SUCCESS");
+      if (allSuccess) return results;
+      console.warn(`[EmailService] Resend had failures, trying Brevo...`);
+    } catch (err) {
+      console.warn(`[EmailService] Resend failed: ${err.message}. Trying Brevo...`);
+    }
+  }
+
+  // --- Try Brevo second ---
+  if (process.env.BREVO_API_KEY) {
+    try {
+      console.log(`[EmailService] Attempting Brevo HTTPS API...`);
+      const results = await sendViaBrevo(recipients, subject, htmlBody, report);
+      const allSuccess = results.every(r => r.status === "SUCCESS");
+      if (allSuccess) return results;
+      console.warn(`[EmailService] Brevo had failures, trying SMTP fallback...`);
+    } catch (err) {
+      console.warn(`[EmailService] Brevo failed: ${err.message}. Trying SMTP fallback...`);
+    }
+  }
+
+  // --- SMTP fallback (works locally, blocked on Render) ---
+  console.log(`[EmailService] Attempting SMTP (NOTE: this is blocked on Render Free tier!)...`);
+  return await sendViaSmtp(recipients, subject, htmlBody, report);
 }
 
 module.exports = {

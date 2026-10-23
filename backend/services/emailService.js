@@ -5,6 +5,9 @@ const path = require("path");
 const fs = require("fs");
 const { pool, getIsDbConnected } = require("../config/db");
 
+const dns = require("dns");
+try { dns.setDefaultResultOrder("ipv4first"); } catch (_) {}
+
 let _transporter = null;
 
 // ---------------------------------------------------------------------------
@@ -22,13 +25,20 @@ function getTransporter() {
   }
 
   if (!_transporter) {
-    const isGmail = host.includes("gmail");
-    const transportOptions = isGmail
-      ? { service: "gmail", auth: { user, pass } }
-      : { host, port, secure: port === 465, auth: { user, pass } };
+    const isExplicitPort465 = port === 465;
+    const transportOptions = {
+      host: host || "smtp.gmail.com",
+      port: port || 587,
+      secure: isExplicitPort465,
+      family: 4, // Force IPv4 on cloud hosts like Render to prevent ENETUNREACH
+      auth: { user, pass },
+      tls: {
+        rejectUnauthorized: false
+      }
+    };
 
     _transporter = nodemailer.createTransport(transportOptions);
-    console.log(`[EmailService] SMTP transporter initialized -> ${isGmail ? "Gmail Service" : `${host}:${port}`} (${user})`);
+    console.log(`[EmailService] SMTP transporter initialized -> ${host}:${port || 587} (IPv4, ${user})`);
   }
 
   return _transporter;
@@ -285,14 +295,13 @@ async function sendReportEmail(report) {
 
   const senderEmail = process.env.SMTP_USER;
   // - For AUTOMATIC module: sender uses system email with display name "Report from xyz camera" (e.g. "Report from Camera 1")
-  // - For MANUAL reports: sender uses the citizen reporter's name and email (with fallback to system email if not provided)
+  // - For MANUAL reports: sender uses citizen reporter's name via authenticated system email to satisfy SPF/DKIM
   let fromAddress;
   if (isAutomatic) {
     fromAddress = `"Report from ${cameraLabel}" <${senderEmail}>`;
   } else {
     const reporterName = report.reporter_name || "Citizen Reporter";
-    const reporterEmail = report.reporter_email || senderEmail;
-    fromAddress = `"${reporterName}" <${reporterEmail}>`;
+    fromAddress = `"${reporterName} (via Animal Rescue Alert)" <${senderEmail}>`;
   }
 
   const results = [];

@@ -152,16 +152,19 @@ a {
 
 .hero-section {
     min-height: 560px;
-
     background-image: url("assets/hero-dog.jpg");
     background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-
+    background-position: center center;
+    background-attachment: scroll;
     position: relative;
-
     display: flex;
     align-items: center;
+}
+
+@media (min-width: 992px) {
+    .hero-section {
+        background-attachment: fixed;
+    }
 }
 
 .hero-overlay {
@@ -787,6 +790,12 @@ footer {
         border: 1px solid #eef3f0;
     }
 
+    .navbar-collapse.show {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
     .navbar-nav {
         gap: 0;
     }
@@ -819,6 +828,18 @@ footer {
 
     .hero-section {
         min-height: 520px;
+        background-attachment: scroll !important;
+        background-position: center center !important;
+        background-size: cover !important;
+    }
+
+    .hero-overlay {
+        background: linear-gradient(
+            180deg,
+            rgba(4, 29, 14, 0.92) 0%,
+            rgba(5, 32, 16, 0.85) 55%,
+            rgba(4, 29, 14, 0.95) 100%
+        ) !important;
     }
 
     .report-options {
@@ -865,8 +886,14 @@ footer {
         font-size: 11.5px;
     }
 
+    .hero-container {
+        text-align: center;
+    }
+
     .hero-content {
         padding: 40px 14px;
+        margin: 0 auto;
+        text-align: center;
     }
 
     .hero-content h1 {
@@ -879,12 +906,15 @@ footer {
         font-size: 14px;
         line-height: 1.6;
         margin-bottom: 22px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .hero-buttons {
         flex-direction: column;
         width: 100%;
         gap: 10px;
+        align-items: center;
     }
 
     .btn-main,
@@ -892,6 +922,21 @@ footer {
         width: 100%;
         min-height: 50px;
         font-size: 14.5px;
+    }
+
+    .option-card {
+        padding: 24px 18px;
+        border-radius: 16px;
+        margin: 0 auto;
+    }
+
+    .option-card h3 {
+        font-size: 19px;
+    }
+
+    .option-card p {
+        font-size: 13.5px;
+        line-height: 1.55;
     }
 
     .section-heading h2,

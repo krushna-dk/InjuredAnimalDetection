@@ -10,7 +10,14 @@ async function createReport(req, res, next) {
   try {
     let imagePath = null;
     if (req.file) {
-      imagePath = `/uploads/${path.basename(req.file.path)}`;
+      try {
+        const fs = require("fs");
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const mimeType = req.file.mimetype || "image/jpeg";
+        imagePath = `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
+      } catch (err) {
+        imagePath = `/uploads/${path.basename(req.file.path)}`;
+      }
     } else if (req.body.image_url) {
       imagePath = req.body.image_url;
     }

@@ -15,7 +15,14 @@ async function processFrame({ file, metadata = {} }) {
   const longitude = metadata.longitude || null;
   const detectedAt = metadata.timestamp ? new Date(metadata.timestamp) : new Date();
 
-  const relativeImagePath = `/uploads/${path.basename(file.path)}`;
+  let relativeImagePath;
+  try {
+    const fileBuffer = fs.readFileSync(file.path);
+    const mimeType = file.mimetype || "image/jpeg";
+    relativeImagePath = `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
+  } catch (_) {
+    relativeImagePath = `/uploads/${path.basename(file.path)}`;
+  }
 
   console.log(`[DetectionService] Analyzing frame: ${file.filename} from camera: ${cameraId}`);
 

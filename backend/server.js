@@ -30,8 +30,14 @@ app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 // Static uploads folder for serving captured frame evidence
 app.use("/uploads", express.static(path.join(__dirname, process.env.UPLOAD_DIR || "uploads")));
 
-// Serve frontend static files (defaults to index.html on root)
-app.use(express.static(path.join(__dirname, "..")));
+// Serve frontend static files (with fresh cache headers during updates)
+app.use(express.static(path.join(__dirname, ".."), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith(".html") || filePath.endsWith(".css") || filePath.endsWith(".js")) {
+      res.setHeader("Cache-Control", "no-cache, must-revalidate");
+    }
+  }
+}));
 
 // Dedicated API Health Check Route
 app.get("/api/health", (req, res) => {

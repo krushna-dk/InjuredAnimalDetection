@@ -244,9 +244,23 @@ function renderReports() {
 
         let imgHtml = "";
         if (report.image_path) {
-            const imgSrc = report.image_path.startsWith("http") ? report.image_path :
-                           (report.image_path.startsWith("/") ? `${API_BASE_URL}${report.image_path}` : `${report.image_path}`);
-            imgHtml = `<img src="${imgSrc}" alt="${report.animal_type}" loading="lazy" decoding="async" style="width:100%;height:160px;object-fit:cover;border-radius:12px;margin-bottom:14px;background:#101815;">`;
+            const imgSrc = (report.image_path.startsWith("http") || report.image_path.startsWith("data:"))
+                ? report.image_path
+                : (report.image_path.startsWith("/") ? `${API_BASE_URL}${report.image_path}` : `${report.image_path}`);
+            imgHtml = `
+                <div class="past-report-img-wrapper" style="position:relative;width:100%;height:165px;border-radius:12px;overflow:hidden;margin-bottom:14px;background:#0d1e13;">
+                    <img src="${imgSrc}" alt="${report.animal_type}" loading="lazy" decoding="async"
+                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'d-flex flex-column align-items-center justify-content-center h-100 text-muted\\'><span style=\\'font-size:36px;\\'>${animalIcon}</span><small style=\\'font-size:11px;color:#a3b8aa;margin-top:4px;\\'>${report.animal_type} (Evidence on Record)</small></div>';"
+                         style="width:100%;height:100%;object-fit:cover;">
+                </div>
+            `;
+        } else {
+            imgHtml = `
+                <div class="past-report-img-wrapper d-flex flex-column align-items-center justify-content-center" style="width:100%;height:140px;border-radius:12px;margin-bottom:14px;background:#f0f6f2;border:1px dashed #c2d8c9;">
+                    <span style="font-size:36px;">${animalIcon}</span>
+                    <small style="font-size:11px;color:#5c7564;margin-top:4px;">${report.animal_type} (Incident Logged)</small>
+                </div>
+            `;
         }
 
         const dateStr = report.report_date || (report.created_at ? new Date(report.created_at).toLocaleDateString() : "Today");
@@ -424,14 +438,21 @@ window.openReportDetail = async function (reportCode) {
     const modalImage = document.getElementById("modalImage");
     const modalPlaceholder = document.getElementById("modalImagePlaceholder");
     if (report.image_path) {
-        const imgSrc = report.image_path.startsWith("http") ? report.image_path :
-                       (report.image_path.startsWith("/") ? `${API_BASE_URL}${report.image_path}` : `${report.image_path}`);
+        const imgSrc = (report.image_path.startsWith("http") || report.image_path.startsWith("data:"))
+            ? report.image_path
+            : (report.image_path.startsWith("/") ? `${API_BASE_URL}${report.image_path}` : `${report.image_path}`);
         modalImage.src = imgSrc;
         modalImage.style.display = "block";
         modalPlaceholder.style.display = "none";
+        modalImage.onerror = function () {
+            modalImage.style.display = "none";
+            modalPlaceholder.style.display = "block";
+            modalPlaceholder.innerHTML = `<span style="font-size:42px;">${animalIcon}</span><p class="small text-muted mt-2 mb-0">${report.animal_type} (Evidence on Record)</p>`;
+        };
     } else {
         modalImage.style.display = "none";
         modalPlaceholder.style.display = "block";
+        modalPlaceholder.innerHTML = `<span style="font-size:42px;">${animalIcon}</span><p class="small text-muted mt-2 mb-0">No image captured for this report</p>`;
     }
 
     // Rescue contacts list
@@ -455,8 +476,47 @@ window.openReportDetail = async function (reportCode) {
 };
 
 // ==========================================
+// BULLETPROOF UNIVERSAL MOBILE NAVBAR TOGGLE
+// ==========================================
+function setupMobileNavbar() {
+    const toggler = document.querySelector(".navbar-toggler");
+    const navCollapse = document.querySelector(".navbar-collapse");
+    if (!toggler || !navCollapse) return;
+
+    toggler.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = navCollapse.classList.contains("show");
+        if (isOpen) {
+            navCollapse.classList.remove("show");
+            toggler.setAttribute("aria-expanded", "false");
+        } else {
+            navCollapse.classList.add("show");
+            toggler.setAttribute("aria-expanded", "true");
+        }
+    });
+
+    // Close when tapping any link inside menu
+    document.querySelectorAll(".navbar-nav .nav-link, .navbar-collapse .report-btn").forEach(item => {
+        item.addEventListener("click", () => {
+            navCollapse.classList.remove("show");
+            toggler.setAttribute("aria-expanded", "false");
+        });
+    });
+
+    // Close when tapping outside on mobile
+    document.addEventListener("click", function (e) {
+        if (!navCollapse.contains(e.target) && !toggler.contains(e.target) && navCollapse.classList.contains("show")) {
+            navCollapse.classList.remove("show");
+            toggler.setAttribute("aria-expanded", "false");
+        }
+    });
+}
+
+// ==========================================
 // INITIALIZE ON DOM READY
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
+    setupMobileNavbar();
     loadPastReports();
 });

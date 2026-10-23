@@ -519,3 +519,37 @@ btnSubmitAnother.addEventListener("click", () => {
     resetFormBtn.click();
     window.scrollTo({ top: 0, behavior: "smooth" });
 });
+
+// Universal Mobile Navbar Toggle
+document.addEventListener("DOMContentLoaded", function () {
+    const toggler = document.querySelector(".navbar-toggler");
+    const navCollapse = document.querySelector(".navbar-collapse");
+    if (!toggler || !navCollapse) return;
+
+    toggler.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = navCollapse.classList.contains("show");
+        if (isOpen) {
+            navCollapse.classList.remove("show");
+            toggler.setAttribute("aria-expanded", "false");
+        } else {
+            navCollapse.classList.add("show");
+            toggler.setAttribute("aria-expanded", "true");
+        }
+    });
+
+    document.querySelectorAll(".navbar-nav .nav-link, .navbar-collapse .report-btn").forEach(item => {
+        item.addEventListener("click", () => {
+            navCollapse.classList.remove("show");
+            toggler.setAttribute("aria-expanded", "false");
+        });
+    });
+
+    document.addEventListener("click", function (e) {
+        if (!navCollapse.contains(e.target) && !toggler.contains(e.target) && navCollapse.classList.contains("show")) {
+            navCollapse.classList.remove("show");
+            toggler.setAttribute("aria-expanded", "false");
+        }
+    });
+});

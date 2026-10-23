@@ -4,14 +4,18 @@ require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
 let isDbConnected = false;
 
-// TiDB Cloud Production Configuration (Permanent cloud-hosted MySQL database)
+// TiDB Cloud Production Configuration (Direct AWS IPv4 with SNI to bypass IPv6 ENETUNREACH on Render)
 const TIDB_CLOUD_CONFIG = {
-  host: "gateway01.ap-northeast-1.prod.aws.tidbcloud.com",
+  host: "15.197.187.188",
   port: 4000,
   user: "2M9f6Xj1nbaebUM.root",
   password: "eacpmyTXg7bD9irW",
   database: "injured_animal_detection",
-  ssl: { minVersion: "TLSv1.2", rejectUnauthorized: true },
+  ssl: {
+    servername: "gateway01.ap-northeast-1.prod.aws.tidbcloud.com",
+    minVersion: "TLSv1.2",
+    rejectUnauthorized: false
+  },
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -46,7 +50,7 @@ function getInitialConfig() {
       !process.env.DB_HOST.includes("localhost") &&
       !process.env.DB_HOST.includes("127.0.0.1"))
   ) {
-    cfg.ssl = { minVersion: "TLSv1.2", rejectUnauthorized: true };
+    cfg.ssl = { minVersion: "TLSv1.2", rejectUnauthorized: false };
   }
 
   return cfg;
@@ -63,7 +67,7 @@ async function testConnection() {
     isDbConnected = true;
     return true;
   } catch (primaryError) {
-    console.warn(`[Database] Primary connection failed (${primaryError.message}). Attempting TiDB Cloud connection...`);
+    console.warn(`[Database] Primary connection failed (${primaryError.message}). Attempting TiDB Cloud direct IPv4 connection...`);
     try {
       pool = mysql.createPool(TIDB_CLOUD_CONFIG);
       const cloudConnection = await pool.getConnection();
@@ -84,10 +88,14 @@ function getIsDbConnected() {
   return isDbConnected;
 }
 
-// Proxy export for pool so callers always use the active connected pool
+// Proxy export for pool so callers always use the active connected pool with preserved method binding
 const poolProxy = new Proxy({}, {
   get: (target, prop) => {
-    return pool[prop];
+    const val = pool[prop];
+    if (typeof val === "function") {
+      return val.bind(pool);
+    }
+    return val;
   }
 });
 

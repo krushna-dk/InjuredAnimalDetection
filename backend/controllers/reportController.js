@@ -15,8 +15,10 @@ async function createReport(req, res, next) {
         const fileBuffer = fs.readFileSync(req.file.path);
         const mimeType = req.file.mimetype || "image/jpeg";
         imagePath = `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
+        try { fs.unlinkSync(req.file.path); } catch (_) {}
       } catch (err) {
-        imagePath = `/uploads/${path.basename(req.file.path)}`;
+        console.warn("[ReportController] File buffer conversion notice:", err.message);
+        imagePath = null;
       }
     } else if (req.body.image_url) {
       imagePath = req.body.image_url;

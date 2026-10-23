@@ -240,25 +240,33 @@ function renderReports() {
 
         const animalIcon = report.animal_type?.toLowerCase() === "cat" ? "🐈" :
             (report.animal_type?.toLowerCase() === "cow" ? "🐄" :
-            (report.animal_type?.toLowerCase() === "bird" ? "🕊️" : "🐕"));
+            (report.animal_type?.toLowerCase() === "bird" ? "🕊️" :
+            (report.animal_type?.toLowerCase() === "monkey" ? "🐒" : "🐕")));
+
+        // Filter out dummy 1x1 pixels or broken paths so black boxes never render
+        const hasValidImage = Boolean(
+            report.image_path &&
+            (report.image_path.startsWith("data:") ? report.image_path.length > 500 : true) &&
+            report.image_path.trim() !== ""
+        );
 
         let imgHtml = "";
-        if (report.image_path) {
+        if (hasValidImage) {
             const imgSrc = (report.image_path.startsWith("http") || report.image_path.startsWith("data:"))
                 ? report.image_path
                 : (report.image_path.startsWith("/") ? `${API_BASE_URL}${report.image_path}` : `${report.image_path}`);
             imgHtml = `
-                <div class="past-report-img-wrapper" style="position:relative;width:100%;height:165px;border-radius:12px;overflow:hidden;margin-bottom:14px;background:#0d1e13;">
+                <div class="past-report-img-wrapper" style="position:relative;width:100%;height:165px;border-radius:12px;overflow:hidden;margin-bottom:14px;background:#f8fafc;border:1px solid #e2e8f0;">
                     <img src="${imgSrc}" alt="${report.animal_type}" loading="lazy" decoding="async"
-                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'d-flex flex-column align-items-center justify-content-center h-100 text-muted\\'><span style=\\'font-size:36px;\\'>${animalIcon}</span><small style=\\'font-size:11px;color:#a3b8aa;margin-top:4px;\\'>${report.animal_type} (Evidence on Record)</small></div>';"
+                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'d-flex flex-column align-items-center justify-content-center h-100\\'><span style=\\'font-size:38px;\\'>${animalIcon}</span><small style=\\'font-size:12px;font-weight:600;color:#166534;margin-top:6px;\\'>${report.animal_type} (Incident Logged)</small></div>';"
                          style="width:100%;height:100%;object-fit:cover;">
                 </div>
             `;
         } else {
             imgHtml = `
-                <div class="past-report-img-wrapper d-flex flex-column align-items-center justify-content-center" style="width:100%;height:140px;border-radius:12px;margin-bottom:14px;background:#f0f6f2;border:1px dashed #c2d8c9;">
-                    <span style="font-size:36px;">${animalIcon}</span>
-                    <small style="font-size:11px;color:#5c7564;margin-top:4px;">${report.animal_type} (Incident Logged)</small>
+                <div class="past-report-img-wrapper d-flex flex-column align-items-center justify-content-center" style="width:100%;height:165px;border-radius:12px;margin-bottom:14px;background:#f0fdf4;border:1px dashed #86efac;">
+                    <span style="font-size:38px;">${animalIcon}</span>
+                    <small style="font-size:12px;font-weight:600;color:#166534;margin-top:6px;">${report.animal_type} (Incident Logged)</small>
                 </div>
             `;
         }
@@ -437,7 +445,18 @@ window.openReportDetail = async function (reportCode) {
     // Modal Image
     const modalImage = document.getElementById("modalImage");
     const modalPlaceholder = document.getElementById("modalImagePlaceholder");
-    if (report.image_path) {
+    const modalIcon = report.animal_type?.toLowerCase() === "cat" ? "🐈" :
+        (report.animal_type?.toLowerCase() === "cow" ? "🐄" :
+        (report.animal_type?.toLowerCase() === "bird" ? "🕊️" :
+        (report.animal_type?.toLowerCase() === "monkey" ? "🐒" : "🐕")));
+
+    const hasValidModalImg = Boolean(
+        report.image_path &&
+        (report.image_path.startsWith("data:") ? report.image_path.length > 500 : true) &&
+        report.image_path.trim() !== ""
+    );
+
+    if (hasValidModalImg) {
         const imgSrc = (report.image_path.startsWith("http") || report.image_path.startsWith("data:"))
             ? report.image_path
             : (report.image_path.startsWith("/") ? `${API_BASE_URL}${report.image_path}` : `${report.image_path}`);
@@ -447,12 +466,12 @@ window.openReportDetail = async function (reportCode) {
         modalImage.onerror = function () {
             modalImage.style.display = "none";
             modalPlaceholder.style.display = "block";
-            modalPlaceholder.innerHTML = `<span style="font-size:42px;">${animalIcon}</span><p class="small text-muted mt-2 mb-0">${report.animal_type} (Evidence on Record)</p>`;
+            modalPlaceholder.innerHTML = `<span style="font-size:42px;">${modalIcon}</span><p class="small fw-semibold text-success mt-2 mb-0">${report.animal_type} (Incident Logged)</p>`;
         };
     } else {
         modalImage.style.display = "none";
         modalPlaceholder.style.display = "block";
-        modalPlaceholder.innerHTML = `<span style="font-size:42px;">${animalIcon}</span><p class="small text-muted mt-2 mb-0">No image captured for this report</p>`;
+        modalPlaceholder.innerHTML = `<span style="font-size:42px;">${modalIcon}</span><p class="small fw-semibold text-success mt-2 mb-0">${report.animal_type} (Incident Logged)</p>`;
     }
 
     // Rescue contacts list

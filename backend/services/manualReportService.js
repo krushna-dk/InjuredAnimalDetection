@@ -141,13 +141,12 @@ async function createManualReport(data) {
     console.warn(`[ManualReportService] MySQL not connected, report saved in-memory only: ${reportCode}`);
   }
 
-  // Step 2: Dispatch notification and await completion so email is guaranteed
-  try {
-    await notificationService.dispatch(reportObject);
-    console.log(`[ManualReportService] Notification dispatch completed for ${reportCode}`);
-  } catch (err) {
-    console.error(`[ManualReportService] Notification dispatch error for ${reportCode} (non-fatal):`, err.message);
-  }
+  // Step 2: Non-blocking asynchronous notification dispatch (instant <100ms UI response)
+  setImmediate(() => {
+    notificationService.dispatch(reportObject)
+      .then(() => console.log(`[ManualReportService] Notification dispatch completed for ${reportCode}`))
+      .catch(err => console.error(`[ManualReportService] Notification dispatch error for ${reportCode} (non-fatal):`, err.message));
+  });
 
   return sanitizeReport(reportObject);
 }

@@ -210,14 +210,13 @@ async function createReport(data) {
     }
   }
 
-  // If AUTOMATIC report: dispatch email notification to contacts from database
+  // If AUTOMATIC report: dispatch email notification asynchronously (non-blocking)
   if (reportSource === "AUTOMATIC") {
-    try {
-      await notificationService.dispatch(reportObject);
-      console.log(`[ReportService] Automatic email notification dispatch completed for ${reportCode}`);
-    } catch (err) {
-      console.error(`[ReportService] Automatic email notification dispatch error for ${reportCode} (non-fatal):`, err.message);
-    }
+    setImmediate(() => {
+      notificationService.dispatch(reportObject)
+        .then(() => console.log(`[ReportService] Automatic email notification dispatch completed for ${reportCode}`))
+        .catch(err => console.error(`[ReportService] Automatic email notification error for ${reportCode} (non-fatal):`, err.message));
+    });
   }
 
   return sanitizeForPublic(reportObject);

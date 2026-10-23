@@ -480,7 +480,7 @@ window.openReportDetail = async function (reportCode) {
 // ==========================================
 function setupMobileNavbar() {
     const toggler = document.querySelector(".navbar-toggler");
-    const navCollapse = document.querySelector(".navbar-collapse");
+    const navCollapse = document.getElementById("mainNavbar") || document.querySelector(".navbar-collapse");
     if (!toggler || !navCollapse) return;
 
     toggler.addEventListener("click", function (e) {
@@ -491,6 +491,7 @@ function setupMobileNavbar() {
             navCollapse.classList.remove("show");
             toggler.setAttribute("aria-expanded", "false");
         } else {
+            navCollapse.style.removeProperty("height");
             navCollapse.classList.add("show");
             toggler.setAttribute("aria-expanded", "true");
         }

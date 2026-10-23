@@ -523,7 +523,7 @@ btnSubmitAnother.addEventListener("click", () => {
 // Universal Mobile Navbar Toggle
 document.addEventListener("DOMContentLoaded", function () {
     const toggler = document.querySelector(".navbar-toggler");
-    const navCollapse = document.querySelector(".navbar-collapse");
+    const navCollapse = document.getElementById("mainNavbar") || document.querySelector(".navbar-collapse");
     if (!toggler || !navCollapse) return;
 
     toggler.addEventListener("click", function (e) {
@@ -534,6 +534,7 @@ document.addEventListener("DOMContentLoaded", function () {
             navCollapse.classList.remove("show");
             toggler.setAttribute("aria-expanded", "false");
         } else {
+            navCollapse.style.removeProperty("height");
             navCollapse.classList.add("show");
             toggler.setAttribute("aria-expanded", "true");
         }

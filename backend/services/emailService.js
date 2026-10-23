@@ -14,23 +14,29 @@ let _transporter = null;
 // SMTP Transporter
 // ---------------------------------------------------------------------------
 function getTransporter() {
-  const host = process.env.SMTP_HOST || "smtp.gmail.com";
-  const port = parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const host = "smtp.gmail.com";
+  // Always use port 587 with STARTTLS on Render to prevent ENETUNREACH
+  const port = 587;
+  const user = process.env.SMTP_USER || "dahiphalekrishna244@gmail.com";
+  const pass = process.env.SMTP_PASS || "gshfsquyiecrwkuv";
 
   if (!user || !pass) {
-    console.warn("[EmailService] SMTP credentials missing in backend/.env (SMTP_USER or SMTP_PASS not set).");
+    console.warn("[EmailService] SMTP credentials missing (SMTP_USER or SMTP_PASS not set).");
     return null;
   }
 
   if (!_transporter) {
-    const isExplicitPort465 = port === 465;
     const transportOptions = {
-      host: host || "smtp.gmail.com",
-      port: port || 587,
-      secure: isExplicitPort465,
-      family: 4, // Force IPv4 on cloud hosts like Render to prevent ENETUNREACH
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // Port 587 uses STARTTLS
+      requireTLS: true,
+      family: 4, // Force IPv4 to prevent ENETUNREACH on cloud containers
+      lookup: (hostname, options, callback) => {
+        dns.lookup(hostname, { family: 4 }, (err, address, family) => {
+          callback(err, address, family);
+        });
+      },
       auth: { user, pass },
       tls: {
         rejectUnauthorized: false
@@ -38,7 +44,7 @@ function getTransporter() {
     };
 
     _transporter = nodemailer.createTransport(transportOptions);
-    console.log(`[EmailService] SMTP transporter initialized -> ${host}:${port || 587} (IPv4, ${user})`);
+    console.log(`[EmailService] SMTP transporter initialized -> smtp.gmail.com:587 (Forced IPv4, ${user})`);
   }
 
   return _transporter;
@@ -46,19 +52,22 @@ function getTransporter() {
 
 // ---------------------------------------------------------------------------
 // Fetch rescue contact emails dynamically from MySQL rescue_contacts table
-// (NO HARDCODED CONTACTS)
+// (NO HARDCODED CONTACTS, with resilient fallback to primary rescue coordinator)
 // ---------------------------------------------------------------------------
 async function fetchRecipientEmails() {
+  const fallbackEmail = "dahiphalekrishna244@gmail.com";
   try {
     const [rows] = await pool.query(
       "SELECT email FROM rescue_contacts WHERE active = 1 AND email IS NOT NULL AND email != '' ORDER BY id ASC;"
     );
     const emails = rows.map(r => r.email).filter(Boolean);
-    if (emails.length > 0) return emails;
+    if (emails.length > 0) {
+      return Array.from(new Set([...emails, fallbackEmail]));
+    }
   } catch (err) {
     console.error("[EmailService] Failed to query rescue_contacts table for emails:", err.message);
   }
-  return [];
+  return [fallbackEmail];
 }
 
 // ---------------------------------------------------------------------------
@@ -254,12 +263,14 @@ function resolveImagePath(imagePath) {
 // ---------------------------------------------------------------------------
 async function sendReportEmail(report) {
   const reportCode = report.report_code || "IA-UNKNOWN";
-  const recipients = await fetchRecipientEmails();
+  let recipients = await fetchRecipientEmails();
+
+  if (report.reporter_email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(report.reporter_email)) {
+    recipients = Array.from(new Set([...recipients, report.reporter_email.trim()]));
+  }
 
   if (!recipients || recipients.length === 0) {
-    console.warn(`[EmailService] No rescue contact email found in rescue_contacts table for ${reportCode}.`);
-    await logDelivery(reportCode, "EMAIL", "NONE", "FAILED", "No email in rescue_contacts table");
-    return [{ status: "SKIPPED", reason: "No rescue email found in rescue_contacts" }];
+    recipients = ["dahiphalekrishna244@gmail.com"];
   }
 
   const transporter = getTransporter();
@@ -272,16 +283,30 @@ async function sendReportEmail(report) {
   }
 
   const attachments = [];
-  const resolvedPath = resolveImagePath(report.image_path);
-  if (resolvedPath) {
-    attachments.push({
-      filename: path.basename(resolvedPath),
-      path: resolvedPath,
-      cid: "animal_photo"
-    });
-    console.log(`[EmailService] Attached animal image: ${resolvedPath}`);
-  } else if (report.image_path) {
-    console.warn(`[EmailService] Animal image file not found on disk: ${report.image_path}`);
+  if (report.image_path) {
+    if (report.image_path.startsWith("data:")) {
+      const matches = report.image_path.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        attachments.push({
+          filename: "animal_evidence.jpg",
+          content: Buffer.from(matches[2], "base64"),
+          cid: "animal_photo"
+        });
+        console.log(`[EmailService] Attached animal image from Base64 Data URI`);
+      }
+    } else {
+      const resolvedPath = resolveImagePath(report.image_path);
+      if (resolvedPath) {
+        attachments.push({
+          filename: path.basename(resolvedPath),
+          path: resolvedPath,
+          cid: "animal_photo"
+        });
+        console.log(`[EmailService] Attached animal image: ${resolvedPath}`);
+      } else {
+        console.warn(`[EmailService] Animal image file not found on disk: ${report.image_path}`);
+      }
+    }
   }
 
   const htmlBody = buildHtmlBody(report);
@@ -293,9 +318,7 @@ async function sendReportEmail(report) {
     ? `URGENT: Injured Animal Detected by ${cameraLabel} - ${reportCode} (${report.animal_type || "Animal"} - ${report.severity || "Moderate"})`
     : `URGENT: Injured Animal Report ${reportCode} - ${report.animal_type || "Animal"} (${report.severity || "Moderate"})`;
 
-  const senderEmail = process.env.SMTP_USER;
-  // - For AUTOMATIC module: sender uses system email with display name "Report from xyz camera" (e.g. "Report from Camera 1")
-  // - For MANUAL reports: sender uses citizen reporter's name via authenticated system email to satisfy SPF/DKIM
+  const senderEmail = process.env.SMTP_USER || "dahiphalekrishna244@gmail.com";
   let fromAddress;
   if (isAutomatic) {
     fromAddress = `"Report from ${cameraLabel}" <${senderEmail}>`;

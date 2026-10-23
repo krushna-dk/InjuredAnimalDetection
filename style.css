@@ -33,7 +33,8 @@ a {
 ========================================= */
 
 .main-navbar {
-    height: 84px;
+    min-height: 80px;
+    height: auto;
     background: #ffffff;
     border-bottom: 1px solid #eeeeee;
     position: sticky;
@@ -747,16 +748,43 @@ footer {
    MOBILE RESPONSIVE
 ========================================= */
 
-@media (max-width: 991px) {
+/* =========================================
+   MOBILE & TABLET RESPONSIVE SYSTEM
+========================================= */
 
+@media (max-width: 991.98px) {
     .main-navbar {
         height: auto;
-        min-height: 75px;
+        min-height: 72px;
+        padding: 8px 0;
+    }
+
+    .main-navbar .container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .logo-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 20px;
+    }
+
+    .logo-text span:first-child {
+        font-size: 17px;
+    }
+
+    .logo-text span:last-child {
+        font-size: 13.5px;
     }
 
     .navbar-collapse {
-        background: white;
-        padding: 15px;
+        background: #ffffff;
+        padding: 18px 20px;
+        border-radius: 14px;
+        margin-top: 10px;
+        box-shadow: 0 12px 36px rgba(15, 23, 42, 0.12);
+        border: 1px solid #eef3f0;
     }
 
     .navbar-nav {
@@ -765,23 +793,32 @@ footer {
 
     .nav-link {
         padding: 12px 0 !important;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 14.5px;
     }
 
     .nav-link.active::after {
         display: none;
     }
 
+    .nav-link.active {
+        color: #1d6737 !important;
+        font-weight: 700;
+    }
+
     .report-btn {
-        display: inline-flex;
-        margin-top: 10px;
+        width: 100%;
+        justify-content: center;
+        margin-top: 14px;
+        padding: 12px 18px;
     }
 
     .hero-content h1 {
-        font-size: 38px;
+        font-size: clamp(32px, 6vw, 40px);
     }
 
     .hero-section {
-        min-height: 550px;
+        min-height: 520px;
     }
 
     .report-options {
@@ -791,7 +828,7 @@ footer {
 
     .option-card {
         width: 100%;
-        max-width: 500px;
+        max-width: 100%;
     }
 
     .bottom-cta {
@@ -805,41 +842,68 @@ footer {
     }
 }
 
-
-
 @media (max-width: 576px) {
+    .main-navbar {
+        min-height: 64px;
+    }
+
+    .logo {
+        gap: 8px;
+    }
+
+    .logo-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    .logo-text span:first-child {
+        font-size: 15px;
+    }
+
+    .logo-text span:last-child {
+        font-size: 11.5px;
+    }
 
     .hero-content {
-        padding: 50px 15px;
+        padding: 40px 14px;
     }
 
     .hero-content h1 {
-        font-size: 31px;
+        font-size: clamp(24px, 7vw, 32px);
+        line-height: 1.25;
+        margin-bottom: 16px;
     }
 
     .hero-content p {
         font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 22px;
     }
 
     .hero-buttons {
         flex-direction: column;
+        width: 100%;
+        gap: 10px;
     }
 
     .btn-main,
     .btn-outline {
         width: 100%;
+        min-height: 50px;
+        font-size: 14.5px;
     }
 
     .section-heading h2,
     .simple-section h2,
     .contact-section h2 {
-        font-size: 27px;
+        font-size: clamp(22px, 5.5vw, 28px);
     }
 
     .why-section,
     .simple-section,
     .contact-section {
-        padding: 55px 15px;
+        padding: 45px 14px;
     }
 
     .footer-content {
@@ -1243,12 +1307,14 @@ textarea.form-control {
 /* ================= SEVERITY ================= */
 
 .severity-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
+    width: 100%;
 }
 
 .severity-option {
-    flex: 1;
+    width: 100%;
     cursor: pointer;
 }
 
@@ -1674,35 +1740,79 @@ textarea.form-control {
 }
 
 
-@media (max-width: 576px) {
+@media (max-width: 640px) {
+    .severity-container {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
 
+@media (max-width: 991.98px) {
+    .manual-report-page {
+        padding: 24px 12px 50px;
+    }
+
+    .form-buttons {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .form-buttons .reset-button,
+    .form-buttons .submit-report-button {
+        flex: 1;
+        min-height: 48px;
+    }
+}
+
+@media (max-width: 576px) {
     .report-card {
-        padding: 20px 16px;
+        padding: 20px 14px;
+        border-radius: 14px;
     }
 
     .report-page-header h1 {
-        font-size: 22px;
+        font-size: clamp(20px, 5vw, 24px);
     }
 
     .report-page-header p {
-        font-size: 12px;
+        font-size: 13px;
+        line-height: 1.5;
     }
 
-    .severity-container {
-        flex-direction: column;
+    .form-control,
+    .form-select {
+        font-size: 15px;
+        min-height: 44px;
     }
 
     .severity-box {
-        min-height: 60px;
+        min-height: 58px;
+        padding: 10px 8px;
+    }
+
+    .severity-box strong {
+        font-size: 13px;
+    }
+
+    .severity-box span {
+        font-size: 10.5px;
     }
 
     .form-buttons {
         flex-direction: column;
+        width: 100%;
+        gap: 10px;
     }
 
+    .form-buttons .reset-button,
+    .form-buttons .submit-report-button,
     .cancel-button,
     .submit-report-button {
-        width: 100%;
+        width: 100% !important;
+        min-height: 48px;
     }
 
     .success-buttons {
@@ -1713,7 +1823,6 @@ textarea.form-control {
     .success-buttons button {
         width: 100%;
     }
-
 }
 
 
@@ -2518,4 +2627,28 @@ body:has(.automatic-page) {
 
 .btn-show-less-reports:hover i {
     transform: translateY(-2px);
+}
+
+@media (max-width: 576px) {
+    .report-filters {
+        gap: 6px;
+        margin: 18px 0 24px;
+    }
+
+    .report-filter-btn {
+        padding: 6px 13px;
+        font-size: 11.5px;
+    }
+
+    .past-report-card {
+        padding: 16px;
+    }
+
+    .btn-show-more-reports,
+    .btn-show-less-reports {
+        width: 100%;
+        justify-content: center;
+        padding: 11px 18px;
+        font-size: 13px;
+    }
 }

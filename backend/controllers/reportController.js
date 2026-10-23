@@ -2,6 +2,30 @@ const reportService = require("../services/reportService");
 const manualReportService = require("../services/manualReportService");
 const path = require("path");
 
+// ---------------------------------------------------------------------------
+// compressImageToBase64(buffer)
+// Compresses an uploaded image to max 800px wide, JPEG quality 60.
+// Reduces a 5MB photo to ~60-80KB — making DB inserts near-instant.
+// ---------------------------------------------------------------------------
+async function compressImageToBase64(buffer) {
+  try {
+    const sharp = require("sharp");
+    const compressed = await sharp(buffer)
+      .rotate()                          // auto-correct EXIF orientation
+      .resize({ width: 800, height: 800, fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 60, progressive: true })
+      .toBuffer();
+    const sizeKB = Math.round(compressed.length / 1024);
+    const originalKB = Math.round(buffer.length / 1024);
+    console.log(`[ReportController] Image compressed: ${originalKB}KB → ${sizeKB}KB`);
+    return `data:image/jpeg;base64,${compressed.toString("base64")}`;
+  } catch (sharpErr) {
+    // sharp failed (unsupported format or corrupt) — fall back to raw base64
+    console.warn("[ReportController] sharp compression failed, using raw image:", sharpErr.message);
+    return `data:image/jpeg;base64,${buffer.toString("base64")}`;
+  }
+}
+
 /**
  * POST /api/reports
  * Create a new animal injury report (Manual Citizen submission or Automatic Detection)
@@ -13,9 +37,9 @@ async function createReport(req, res, next) {
       try {
         const fs = require("fs");
         const fileBuffer = fs.readFileSync(req.file.path);
-        const mimeType = req.file.mimetype || "image/jpeg";
-        imagePath = `data:${mimeType};base64,${fileBuffer.toString("base64")}`;
         try { fs.unlinkSync(req.file.path); } catch (_) {}
+        // Compress image before DB storage — critical for submission speed
+        imagePath = await compressImageToBase64(fileBuffer);
       } catch (err) {
         console.warn("[ReportController] File buffer conversion notice:", err.message);
         imagePath = null;

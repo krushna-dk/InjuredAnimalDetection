@@ -1,0 +1,19 @@
+{
+  "name": "injured-animal-detection-and-rehabilitation",
+  "version": "1.0.0",
+  "description": "Injured Animal Detection and Rehabilitation Using AI",
+  "scripts": {
+    "start": "node backend/server.js",
+    "build": "cd backend && npm install",
+    "postinstall": "cd backend && npm install",
+    "dev": "node --watch backend/server.js",
+    "test-manual": "node backend/scripts/test-manual-report.js"
+  },
+  "keywords": [
+    "injured-animal",
+    "ai",
+    "rehabilitation"
+  ],
+  "author": "",
+  "license": "ISC"
+}

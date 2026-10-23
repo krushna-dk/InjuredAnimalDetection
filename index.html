@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Injured Animal Detection Using AI | Reporting Platform</title>
+
+    <!-- Google Font - Poppins & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar navbar-expand-lg main-navbar">
+        <div class="container">
+            <!-- Logo -->
+            <a class="navbar-brand logo" href="#home">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-paw"></i>
+                </div>
+                <div class="logo-text">
+                    <span>Injured Animal</span>
+                    <span>Detection Using AI</span>
+                </div>
+            </a>
+
+            <!-- Mobile Menu Button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigation -->
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manual-report/manual-report.html">Manual Report</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="automatic-module/automatic_module.html">Automatic Detection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#past-reports">Past Reports</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#our-work">Our Work</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </li>
+                </ul>
+
+                <!-- Report Button -->
+                <a href="manual-report/manual-report.html" class="report-btn">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                    Report an Animal
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= HERO SECTION ================= -->
+    <section class="hero-section" id="home">
+        <div class="hero-overlay"></div>
+        <div class="container hero-container">
+            <div class="hero-content">
+                <span class="badge bg-success px-3 py-2 rounded-pill mb-3" style="font-size:12px;letter-spacing:0.5px;">
+                    <i class="fa-solid fa-shield-cat me-1"></i> AI-POWERED DETECTION & REPORTING PLATFORM
+                </span>
+                <h1>
+                    Injured Animal Detection Using AI
+                    <span class="heart">♥</span>
+                </h1>
+                <p>
+                    A centralized platform that bridges the gap between citizens, automated camera feeds, and animal rescue teams. We detect injured stray animals and forward reports directly to local rescue organizations.
+                </p>
+
+                <!-- Hero Buttons (Dual CTAs) -->
+                <div class="hero-buttons">
+                    <a href="manual-report/manual-report.html" class="btn-main">
+                        <i class="fa-solid fa-camera"></i>
+                        Report Injured Animal
+                    </a>
+                    <a href="automatic-module/automatic_module.html" class="btn-outline">
+                        <i class="fa-solid fa-video"></i>
+                        Automatic Detection
+                    </a>
+                    <a href="#past-reports" class="btn-outline">
+                        <i class="fa-solid fa-table-list"></i>
+                        Past Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= PLATFORM STATISTICS ================= -->
+    <section class="stats-overview-section">
+        <div class="container">
+            <div class="row g-3 text-center">
+                <div class="col-lg-3 col-6">
+                    <div class="stat-metric-card metric-total">
+                        <div id="statTotalReports" class="stat-num text-success">0</div>
+                        <div class="stat-label">Total Reports</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="stat-metric-card metric-manual">
+                        <div id="statManualReports" class="stat-num text-primary">0</div>
+                        <div class="stat-label">Manual Reports</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="stat-metric-card metric-auto">
+                        <div id="statAutomaticReports" class="stat-num text-amber">0</div>
+                        <div class="stat-label">Automatic Reports</div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="stat-metric-card metric-forwarded">
+                        <div id="statReportsForwarded" class="stat-num text-emerald">0</div>
+                        <div class="stat-label">Dispatched to Rescue</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= HOW IT WORKS ================= -->
+    <section class="simple-section" id="how-it-works">
+        <div class="container text-center">
+            <span class="small-heading">TWO DEDICATED PIPELINES</span>
+            <h2>How The System Works</h2>
+            <p class="section-intro">
+                Our platform operates through two dedicated reporting pipelines to ensure every injured animal is quickly identified and dispatched to rescue personnel.
+            </p>
+
+            <div class="row g-4 justify-content-center text-start mt-2">
+                <!-- Module 1: Manual -->
+                <div class="col-lg-6 col-md-9">
+                    <div class="option-card h-100 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="option-icon-box manual-icon">
+                                <i class="fa-solid fa-hand-holding-heart"></i>
+                            </div>
+                            <span class="option-badge badge-manual">
+                                <i class="fa-solid fa-user me-1"></i> Citizen Reporting
+                            </span>
+                        </div>
+                        <h3>Module 1: Manual Report</h3>
+                        <p class="flex-grow-1">
+                            Designed for citizens who spot an injured animal. Capture a live photo via device camera or upload an image, allow browser location access, select observed injury details, and submit. The report is recorded in MySQL and immediately forwarded to rescue teams.
+                        </p>
+                        <div class="card-action-wrapper mt-4">
+                            <a href="manual-report/manual-report.html" class="btn-option-action btn-option-primary">
+                                <span>Submit Manual Report</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 2: Automatic -->
+                <div class="col-lg-6 col-md-9">
+                    <div class="option-card automatic-option h-100 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="option-icon-box auto-icon">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <span class="option-badge badge-auto">
+                                <i class="fa-solid fa-bolt me-1"></i> Vision AI Feed
+                            </span>
+                        </div>
+                        <h3>Module 2: Automatic AI Detection</h3>
+                        <p class="flex-grow-1">
+                            Connects to live camera streams (webcam or traffic/security cameras). Captures one frame every 5 seconds, sends it to the Gemini Vision AI for trauma assessment, applies a 10-minute duplicate prevention cooldown, and automatically generates rescue dispatches.
+                        </p>
+                        <div class="card-action-wrapper mt-4">
+                            <a href="automatic-module/automatic_module.html" class="btn-option-action btn-option-secondary">
+                                <span>Launch Automatic Camera</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= WHY IT MATTERS / OUR WORK ================= -->
+    <section class="why-section" id="our-work">
+        <div class="container">
+            <div class="section-heading">
+                <span class="small-heading">OUR WORK & IMPACT</span>
+                <h2>Dedicated to Animal Welfare</h2>
+                <div class="heading-line"></div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-card">
+                        <div class="card-icon"><i class="fa-solid fa-paw"></i></div>
+                        <h3>Rapid Incident Logging</h3>
+                        <p>Immediate detection and structured report generation helps rescue organizations receive essential details without delay.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-card">
+                        <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+                        <h3>Community Driven</h3>
+                        <p>Empowers every citizen with an easy mobile-friendly form to report injured stray dogs, cats, cattle, and birds.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-card">
+                        <div class="card-icon"><i class="fa-solid fa-bolt"></i></div>
+                        <h3>AI Vision Assessment</h3>
+                        <p>Multimodal AI analyzes wound severity, species, and posture cues to guide rescue teams on necessary equipment.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="info-card">
+                        <div class="card-icon"><i class="fa-solid fa-user-shield"></i></div>
+                        <h3>Reporter Privacy</h3>
+                        <p>Citizen contact info and exact residential coordinates are never displayed publicly on public feeds.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= PAST REPORTS ================= -->
+    <section class="simple-section light-section py-5" id="past-reports" style="background:#f7faf8;">
+        <div class="container text-center">
+            <span class="small-heading">INCIDENT FEED</span>
+            <h2>Past Reports</h2>
+            <p class="text-muted" style="max-width:650px;margin:0 auto 15px;">
+                Real-time record of reports submitted manually or generated by automatic camera monitoring. All verified reports are forwarded directly to nearby rescue organizations.
+            </p>
+
+            <!-- Source Filter Tabs -->
+            <div class="report-filters">
+                <button class="report-filter-btn active" data-filter="all">
+                    All Reports (<span id="countAll">0</span>)
+                </button>
+                <button class="report-filter-btn" data-filter="MANUAL">
+                    Manual Reports (<span id="countManual">0</span>)
+                </button>
+                <button class="report-filter-btn" data-filter="AUTOMATIC">
+                    Automatic Camera (<span id="countAutomatic">0</span>)
+                </button>
+                <button class="report-filter-btn" data-filter="forwarded">
+                    Forwarded to Teams (<span id="countForwarded">0</span>)
+                </button>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="pastReportsLoading" class="py-5 text-center">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-2">Loading past reports…</p>
+            </div>
+
+            <!-- Dynamic Report Cards Grid -->
+            <div class="row g-4 text-start" id="pastReportsGrid" style="display:none;"></div>
+
+            <!-- Empty State -->
+            <div id="pastReportsEmpty" class="py-5 text-center text-muted" style="display:none;">
+                <i class="fa-solid fa-folder-open fa-3x mb-3 text-muted opacity-50"></i>
+                <h5>No reports found in this category</h5>
+                <p>New reports submitted manually or from the automatic camera module will appear here automatically.</p>
+            </div>
+
+            <!-- Show More / Show Less Options -->
+            <div id="pastReportsShowMoreContainer" class="past-reports-show-more-container d-flex flex-wrap justify-content-center gap-3" style="display:none;">
+                <button id="btnShowMoreReports" class="btn-show-more-reports" type="button">
+                    <i class="fa-solid fa-angles-down"></i>
+                    <span>Show More Reports (<span id="showMoreRemainingCount">0</span> remaining)</span>
+                </button>
+                <button id="btnShowLessReports" class="btn-show-less-reports" type="button" style="display:none;">
+                    <i class="fa-solid fa-angles-up"></i>
+                    <span>Show Less (Top 15)</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= CONTACT ================= -->
+    <section class="contact-section" id="contact">
+        <div class="container text-center">
+            <span class="small-heading">GET IN TOUCH</span>
+            <h2>Animal Rescue Network</h2>
+            <p style="max-width:600px;margin:0 auto 20px;">
+                Are you an animal rescue NGO, veterinary clinic, or volunteer group? Connect with our platform to receive emergency dispatches for your zone.
+            </p>
+            <a href="mailto:rescue@apf-india.org" class="green-button">
+                <i class="fa-solid fa-envelope me-1"></i> Partner with Us
+            </a>
+        </div>
+    </section>
+
+    <!-- ================= FOOTER ================= -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fa-solid fa-paw"></i>
+                    Injured Animal Detection Using AI
+                </div>
+                <p>
+                    Detection and reporting platform. Once submitted, reports are forwarded directly to configured rescue organizations.
+                </p>
+            </div>
+            <div class="footer-bottom">
+                © 2026 Injured Animal Detection Platform. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================= REPORT DETAIL MODAL ================= -->
+    <div class="modal fade" id="reportDetailModal" tabindex="-1" aria-labelledby="reportModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow" style="border-radius:20px;overflow:hidden;">
+                <div class="modal-header text-white" style="background:#164d2a;padding:18px 24px;">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="reportModalTitle">Incident Report Details</h5>
+                        <small id="modalReportId" class="opacity-75">IA-2026-00001</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-5" id="modalImageCol">
+                            <div class="rounded-3 overflow-hidden bg-light text-center d-flex align-items-center justify-content-center" style="min-height:220px;border:1px solid #e2ece5;">
+                                <img id="modalImage" src="" alt="Report Evidence" class="img-fluid" style="max-height:260px;object-fit:cover;display:none;">
+                                <div id="modalImagePlaceholder" class="p-4 text-muted text-center">
+                                    <i class="fa-solid fa-camera fa-3x mb-2 text-muted opacity-50"></i>
+                                    <p class="small mb-0">No image captured</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 p-3 rounded-3" style="background:#f4f9f5;font-size:13px;">
+                                <div class="mb-2"><strong>Source:</strong> <span id="modalSource" class="source-badge manual">Manual</span></div>
+                                <div class="mb-2"><strong>Severity:</strong> <span id="modalSeverity" class="badge bg-warning text-dark">Moderate</span></div>
+                                <div class="mb-2"><strong>Status:</strong> <span id="modalStatus" class="badge bg-success">Forwarded to Rescue Team</span></div>
+                                <div class="mb-1"><strong>Date & Time:</strong> <span id="modalDate" class="text-muted">—</span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <h4 id="modalAnimalTitle" class="fw-bold mb-2 text-dark">Indie Dog</h4>
+                            <p id="modalLocation" class="text-muted small mb-3"><i class="fa-solid fa-location-dot text-success me-1"></i> <span>Location</span></p>
+
+                            <h6 class="fw-bold text-success mb-1">Observed Injury</h6>
+                            <p id="modalInjury" class="text-secondary small mb-3">Front leg limp</p>
+
+                            <h6 class="fw-bold text-success mb-1">Description</h6>
+                            <p id="modalDescription" class="text-secondary small mb-3">Detailed observation...</p>
+
+                            <h6 class="fw-bold text-success mb-1">Recommended Action</h6>
+                            <p id="modalAction" class="p-2 rounded-2 small mb-4" style="background:#fff8e1;color:#795548;border-left:3px solid #ffb300;">Action advice</p>
+
+                            <h6 class="fw-bold text-success mb-2">Emergency Rescue Contacts (Dispatched)</h6>
+                            <div id="modalRescueContacts" class="d-flex flex-column gap-2" style="font-size:13px;">
+                                <div class="text-muted small">Loading nearby rescue contacts…</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light px-4 py-3">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                    <a id="modalHelplineBtn" href="tel:1962" class="btn btn-success rounded-pill px-4">
+                        <i class="fa-solid fa-phone me-1"></i> Call Emergency Helpline (1962)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Landing Page Script -->
+    <script src="script.js"></script>
+</body>
+</html>

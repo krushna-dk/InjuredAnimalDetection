@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Report | Injured Animal Detection Using AI</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+    <nav class="navbar navbar-expand-lg main-navbar">
+        <div class="container">
+            <!-- LOGO -->
+            <a class="navbar-brand logo" href="../index.html">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-paw"></i>
+                </div>
+                <div class="logo-text">
+                    <span>Injured Animal</span>
+                    <span>Detection Platform</span>
+                </div>
+            </a>
+
+            <!-- MOBILE MENU -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- NAVIGATION -->
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="manual-report.html">Manual Report</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../automatic-module/automatic_module.html">Automatic Detection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#past-reports">Past Reports</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#our-work">Our Work</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#contact">Contact</a>
+                    </li>
+                </ul>
+
+                <a href="../automatic-module/automatic_module.html" class="report-btn">
+                    <i class="fa-solid fa-camera"></i>
+                    Automatic Camera
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= MAIN REPORT PAGE ================= -->
+    <main class="manual-report-page">
+        <div class="container">
+
+            <!-- PAGE HEADER -->
+            <div class="report-page-header">
+                <a href="../index.html" class="back-button" title="Back to Home">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1>Manual Report Submission</h1>
+                    <p>
+                        Report an injured animal directly to local rescue teams. Once submitted, our platform forwards your incident details immediately to active rescue organizations.
+                    </p>
+                </div>
+            </div>
+
+            <!-- REPORT FORM -->
+            <form id="animalReportForm" novalidate>
+                <!-- DYNAMIC ERROR BANNER -->
+                <div id="formErrorMessage" class="alert alert-danger d-none my-3" role="alert" style="border-radius:12px;border-left:5px solid #dc3545;background:#fff5f5;">
+                    <div class="d-flex align-items-center">
+                        <i class="fa-solid fa-circle-exclamation fs-3 me-3 text-danger"></i>
+                        <div>
+                            <strong id="formErrorTitle" style="color:#842029;">Submission Failed</strong>
+                            <div id="formErrorText" style="font-size:13px;color:#842029;margin-top:2px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+
+                    <!-- LEFT COLUMN: ANIMAL & IMAGE -->
+                    <div class="col-lg-6">
+                        <div class="report-card">
+                            <div class="report-card-title">
+                                <div class="title-icon">
+                                    <i class="fa-solid fa-paw"></i>
+                                </div>
+                                <h2>1. Animal & Incident Photo</h2>
+                            </div>
+
+                            <!-- DUAL IMAGE OPTION: UPLOAD OR CAMERA -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    Animal Photo <span class="required">*</span>
+                                </label>
+
+                                <!-- Toggle Tabs -->
+                                <div class="image-source-tabs">
+                                    <button type="button" class="source-tab-btn active" id="tabUploadMode">
+                                        <i class="fa-solid fa-upload"></i> Upload File
+                                    </button>
+                                    <button type="button" class="source-tab-btn" id="tabCameraMode">
+                                        <i class="fa-solid fa-camera"></i> Take Photo
+                                    </button>
+                                </div>
+
+                                <!-- Mode A: File Upload Area -->
+                                <div class="upload-area" id="uploadArea">
+                                    <input type="file" id="animalPhoto" accept="image/png,image/jpeg,image/jpg" hidden>
+                                    <div id="uploadContent">
+                                        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                                        <h5>Click or drag photo here to upload</h5>
+                                        <p>PNG, JPG, JPEG (Max 15MB)</p>
+                                    </div>
+                                </div>
+
+                                <!-- Mode B: Camera Viewfinder -->
+                                <div class="camera-viewfinder-container" id="cameraViewfinder">
+                                    <video id="manualCameraVideo" autoplay playsinline muted></video>
+                                    <div class="camera-controls-overlay">
+                                        <button type="button" class="camera-action-btn camera-snap-btn" id="snapPhotoBtn">
+                                            <i class="fa-solid fa-circle-dot"></i> Snap Photo
+                                        </button>
+                                        <button type="button" class="camera-action-btn" id="switchCameraBtn">
+                                            <i class="fa-solid fa-arrows-rotate"></i> Flip
+                                        </button>
+                                        <button type="button" class="camera-action-btn" id="closeCameraBtn">
+                                            <i class="fa-solid fa-xmark"></i> Close
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Canvas for camera snap (hidden) -->
+                                <canvas id="manualCameraCanvas" style="display:none;"></canvas>
+
+                                <!-- Preview & Selected File Details -->
+                                <div id="imagePreview" class="image-preview-container"></div>
+                                <div class="invalid-feedback" id="photoError">
+                                    Please capture or upload an image of the injured animal.
+                                </div>
+                            </div>
+
+                            <!-- ANIMAL SPECIES & BREED -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="animalType" class="form-label">
+                                        Animal Species / Type <span class="required">*</span>
+                                    </label>
+                                    <select class="form-select" id="animalType" required>
+                                        <option value="">Select species</option>
+                                        <option value="Dog">🐕 Dog</option>
+                                        <option value="Cat">🐈 Cat</option>
+                                        <option value="Cow">🐄 Cow / Cattle</option>
+                                        <option value="Bird">🕊️ Bird</option>
+                                        <option value="Horse">🐎 Horse / Donkey</option>
+                                        <option value="Monkey">🐒 Monkey</option>
+                                        <option value="Other">🐾 Other Wildlife / Stray</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select the animal species/type.
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="breed" class="form-label">
+                                        Breed <small class="text-muted">(If known)</small>
+                                    </label>
+                                    <input type="text" class="form-control" id="breed" placeholder="e.g., Indie, Labrador, Mixed, Unknown">
+                                </div>
+                            </div>
+
+                            <!-- INJURY TYPE -->
+                            <div class="mt-3">
+                                <label for="injuryType" class="form-label">
+                                    Injury Type <span class="required">*</span>
+                                </label>
+                                <select class="form-select" id="injuryType" required>
+                                    <option value="">Select observed injury</option>
+                                    <option value="Open Wound / Laceration">Open Wound / Bleeding Laceration</option>
+                                    <option value="Limping / Suspected Fracture">Limping / Suspected Limb Fracture</option>
+                                    <option value="Hit & Run Blunt Trauma">Hit & Run / Severe Vehicle Collision</option>
+                                    <option value="Eye Injury / Swelling">Eye Injury / Severe Infection</option>
+                                    <option value="Skin Disease / Severe Mange">Skin Disease / Severe Mange</option>
+                                    <option value="Extreme Weakness / Dehydration">Extreme Weakness / Dehydration</option>
+                                    <option value="Entanglement / Trap">Entanglement (Wire, Netting, Trap)</option>
+                                    <option value="Other Visible Injury">Other Visible Injury</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select the injury type.
+                                </div>
+                            </div>
+
+                            <!-- INJURY SEVERITY -->
+                            <div class="mt-4">
+                                <label class="form-label">
+                                    Injury Severity <span class="required">*</span>
+                                </label>
+                                <div class="severity-container">
+                                    <label class="severity-option">
+                                        <input type="radio" name="severity" value="Minor">
+                                        <div class="severity-box minor">
+                                            <strong>🟢 Minor</strong>
+                                            <span>Small wound / Alert / Mobile</span>
+                                        </div>
+                                    </label>
+                                    <label class="severity-option">
+                                        <input type="radio" name="severity" value="Moderate" checked>
+                                        <div class="severity-box moderate">
+                                            <strong>🟡 Moderate</strong>
+                                            <span>Limping / Noticeable Trauma</span>
+                                        </div>
+                                    </label>
+                                    <label class="severity-option">
+                                        <input type="radio" name="severity" value="Severe">
+                                        <div class="severity-box severe">
+                                            <strong>🔴 Severe</strong>
+                                            <span>Heavy bleeding / Unable to move</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="severity-error" id="severityError">
+                                    Please select injury severity.
+                                </div>
+                            </div>
+
+                            <!-- DESCRIPTION -->
+                            <div class="mt-4">
+                                <label for="description" class="form-label">
+                                    Additional Description <span class="required">*</span>
+                                </label>
+                                <textarea class="form-control" id="description" rows="4" maxlength="500" placeholder="Describe the animal's condition, visible wounds, posture, and surroundings..." required></textarea>
+                                <div class="character-count">
+                                    <span id="descriptionCount">0</span> / 500
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please provide a brief description of the incident.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: LOCATION, TIME & SUBMISSION -->
+                    <div class="col-lg-6">
+                        <!-- LOCATION & TIME -->
+                        <div class="report-card">
+                            <div class="report-card-title">
+                                <div class="title-icon">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <h2>2. Location & Incident Time</h2>
+                            </div>
+
+                            <!-- GEOLOCATION BUTTON -->
+                            <div class="mb-3">
+                                <label class="form-label">Automatic Browser Geolocation</label>
+                                <button type="button" class="location-button" id="detectLocation">
+                                    <i class="fa-solid fa-location-crosshairs"></i> Get Current Location
+                                </button>
+                                <div id="locationMessage" class="location-message"></div>
+                            </div>
+
+                            <!-- HUMAN READABLE ADDRESS -->
+                            <div class="mb-3">
+                                <label for="address" class="form-label">
+                                    Human-Readable Location / Landmark <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="address" placeholder="e.g., Sangamner Main Road, Near Shivaji Circle" required>
+                                <small class="text-muted" style="font-size:11px;">You can confirm or edit this location if required.</small>
+                                <div class="invalid-feedback">
+                                    Please provide the animal's location or landmark.
+                                </div>
+                            </div>
+
+                            <!-- LATITUDE & LONGITUDE -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="latitude" class="form-label">Latitude</label>
+                                    <input type="text" class="form-control" id="latitude" placeholder="e.g., 19.5761" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="longitude" class="form-label">Longitude</label>
+                                    <input type="text" class="form-control" id="longitude" placeholder="e.g., 74.2070" readonly>
+                                </div>
+                            </div>
+
+                            <!-- DATE & TIME -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="reportDate" class="form-label">
+                                        Date <span class="required">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="reportDate" required>
+                                    <div class="invalid-feedback">Please select the incident date.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="reportTime" class="form-label">
+                                        Time <span class="required">*</span>
+                                    </label>
+                                    <input type="time" class="form-control" id="reportTime" required>
+                                    <div class="invalid-feedback">Please select the incident time.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- REPORTER CONTACT -->
+                        <div class="report-card mt-4">
+                            <div class="report-card-title">
+                                <div class="title-icon">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <h2>3. Reporter Contact Details</h2>
+                            </div>
+
+                            <p class="small text-muted mb-3">
+                                Your email will be delivered to our emergency rescue coordinator so they can communicate with you directly regarding this animal's rescue.
+                            </p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="reporterName" class="form-label">Your Name</label>
+                                    <input type="text" class="form-control" id="reporterName" placeholder="e.g., Rahul Patil">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="reporterEmail" class="form-label">Your Email Address <span class="required">*</span></label>
+                                    <input type="email" class="form-control" id="reporterEmail" placeholder="e.g., rahul@gmail.com" required>
+                                    <div class="invalid-feedback" id="reporterEmailError">
+                                        Please provide a valid email address so the rescue team can reach you.
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="phone" class="form-label">Mobile Phone Number <small class="text-muted">(Optional)</small></label>
+                                    <input type="tel" class="form-control" id="phone" placeholder="10-digit mobile number" maxlength="10">
+                                    <div class="invalid-feedback" id="phoneError">
+                                        Please enter a valid 10-digit mobile number.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <label for="additionalNote" class="form-label">First Aid / Volunteer Notes (Optional)</label>
+                                <textarea class="form-control" id="additionalNote" rows="2" maxlength="300" placeholder="e.g., Provided drinking water; animal is under shade near the bakery..."></textarea>
+                                <div class="character-count">
+                                    <span id="noteCount">0</span> / 300
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTTOM INFO BOXES & ACTION BUTTONS -->
+                <div class="row g-3 mt-2 align-items-stretch">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="important-box h-100">
+                            <div class="important-icon">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </div>
+                            <div>
+                                <h4>Important Notice</h4>
+                                <p>
+                                    Our platform immediately notifies configured animal rescue teams. For your safety, do not attempt invasive procedures or handle distressed animals directly.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <div class="privacy-box h-100">
+                            <div class="important-icon">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <h4>Privacy Protected</h4>
+                                <p>
+                                    Reporter personal details and exact residential coordinates are never displayed publicly on past reports.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS: SUBMIT & RESET -->
+                    <div class="col-lg-4 col-md-12">
+                        <div class="form-buttons h-100 d-flex gap-2">
+                            <button type="reset" class="reset-button w-50" id="resetFormBtn">
+                                <i class="fa-solid fa-rotate-left"></i> Reset
+                            </button>
+                            <button type="submit" class="submit-report-button w-50" id="submitReportBtn">
+                                <i class="fa-solid fa-paper-plane"></i> Submit Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- ================= SUCCESS CONFIRMATION MODAL/CARD ================= -->
+            <div id="successMessage" class="success-message">
+                <div class="success-icon">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+
+                <h2>Report Submitted Successfully</h2>
+                <p>
+                    Your report has been recorded in the platform and dispatched.
+                </p>
+
+                <div class="report-id-box">
+                    <span>Generated Report ID</span>
+                    <strong id="generatedReportId">IA-2026-00001</strong>
+                </div>
+
+                <div class="alert alert-success mt-3 py-2 px-3 text-center" role="alert" style="font-weight:600;font-size:14px;background:#e8f5ec;border-color:#badbcc;color:#0f5132;">
+                    <i class="fa-solid fa-paper-plane me-1"></i>
+                    Your report has been forwarded to the rescue team.
+                </div>
+
+                <div id="reportSummaryDetails" class="my-3 p-3 text-start rounded-3" style="background:#f4f9f5;border:1px solid #cce5d4;font-size:13px;color:#1e432d;"></div>
+
+                <p class="small-success-text text-muted">
+                    Save your Report ID to reference this submission in the Past Reports feed.
+                </p>
+
+                <div class="success-buttons">
+                    <a href="../index.html#past-reports" class="green-button">
+                        <i class="fa-solid fa-list-check"></i> View in Past Reports
+                    </a>
+                    <button type="button" class="outline-success-button" id="btnSubmitAnother">
+                        <i class="fa-solid fa-plus"></i> Submit Another Report
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Manual Report Logic -->
+    <script src="manual-report.js"></script>
+</body>
+</html>

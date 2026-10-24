@@ -124,6 +124,15 @@ async function loadStatistics() {
                 document.getElementById("statManualReports").textContent = s.manual_reports || 0;
                 document.getElementById("statAutomaticReports").textContent = s.automatic_reports || 0;
                 document.getElementById("statReportsForwarded").textContent = s.reports_forwarded || 0;
+
+                const countAll = document.getElementById("countAll");
+                const countManual = document.getElementById("countManual");
+                const countAutomatic = document.getElementById("countAutomatic");
+                const countForwarded = document.getElementById("countForwarded");
+                if (countAll) countAll.textContent = s.total_reports || 0;
+                if (countManual) countManual.textContent = s.manual_reports || 0;
+                if (countAutomatic) countAutomatic.textContent = s.automatic_reports || 0;
+                if (countForwarded) countForwarded.textContent = s.reports_forwarded || 0;
                 return;
             }
         }
@@ -150,7 +159,7 @@ async function loadPastReports() {
     const loadingEl = document.getElementById("pastReportsLoading");
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/reports?limit=100`);
+        const res = await fetch(`${API_BASE_URL}/api/reports?limit=15`);
         if (res.ok) {
             const json = await res.json();
             if (json.success && Array.isArray(json.data) && json.data.length > 0) {

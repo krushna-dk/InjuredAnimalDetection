@@ -132,7 +132,7 @@ async function createReport(req, res, next) {
  */
 async function getAllReports(req, res, next) {
   try {
-    const { limit = 50, offset = 0, source, animal_type, status } = req.query;
+    const { limit = 15, offset = 0, source, animal_type, status } = req.query;
 
     const result = await reportService.getReports({
       limit,
